@@ -5,7 +5,7 @@ class AuditGraph {
         this.container = document.getElementById(containerId);
         this.width = 500;
         this.height = 500;
-        this.margin = 50;
+        this.margin = 60; // Increased margin for better spacing
         this.data = null;
     }
     
@@ -29,10 +29,11 @@ class AuditGraph {
         // Clear previous graph
         this.container.innerHTML = '';
         
-        // Calculate audit values
-        const totalUp = this.data.totalUp || 0;
-        const totalDown = this.data.totalDown || 0;
+        // Calculate audit values in MB
+        const totalUp = this.data.totalUp / 1000000 || 0; // Convert to MB
+        const totalDown = this.data.totalDown / 1000000 || 0; // Convert to MB
         const total = totalUp + totalDown;
+        const ratio = totalDown > 0 ? +(totalUp / totalDown).toFixed(1) : 0; // Calculate actual ratio
         
         // Data for pie chart
         const pieData = [
@@ -70,7 +71,7 @@ class AuditGraph {
         g.setAttribute('transform', `translate(${this.width / 2},${this.height / 2})`);
         svg.appendChild(g);
         
-        // Calculate radius
+        // Calculate radius (slightly reduced to prevent label overlap)
         const radius = Math.min(this.width, this.height) / 2 - this.margin;
         
         // Create arcs for pie chart
@@ -119,27 +120,14 @@ class AuditGraph {
             path.addEventListener('mouseout', () => {
                 path.setAttribute('transform', '');
                 path.setAttribute('stroke-width', 2);
-                percentageText.textContent = `${Math.round((totalUp / total) * 100)}:${Math.round((totalDown / total) * 100)}`;
-                percentageLabelText.textContent = 'Up:Down Ratio';
+                percentageText.textContent = ratio.toFixed(1);
+                percentageLabelText.textContent = 'Audit Ratio';
             });
             
             g.appendChild(path);
             
-            // Add labels
-            const midAngle = startAngle + sliceAngle / 2;
-            const labelRadius = radius * 0.7; // Position label inside the slice
-            const labelX = labelRadius * Math.sin(midAngle);
-            const labelY = -labelRadius * Math.cos(midAngle);
-            
-            const valueText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            valueText.setAttribute('x', labelX);
-            valueText.setAttribute('y', labelY);
-            valueText.setAttribute('text-anchor', 'middle');
-            valueText.setAttribute('fill', 'white');
-            valueText.setAttribute('font-weight', 'bold');
-            valueText.setAttribute('font-size', '18px');
-            valueText.textContent = slice.value.toLocaleString();
-            g.appendChild(valueText);
+            // We're removing the labels that were previously added outside the pie chart
+            // This was done at the request of the user to only use the legend
             
             startAngle = endAngle;
         });
@@ -150,8 +138,8 @@ class AuditGraph {
         percentageText.setAttribute('y', 5);
         percentageText.setAttribute('text-anchor', 'middle');
         percentageText.setAttribute('font-weight', 'bold');
-        percentageText.setAttribute('font-size', '24px');
-        percentageText.textContent = `${Math.round((totalUp / total) * 100)}:${Math.round((totalDown / total) * 100)}`;
+        percentageText.setAttribute('font-size', '30px'); // Increased size for visibility
+        percentageText.textContent = ratio.toFixed(1); // Display ratio as 1.3
         g.appendChild(percentageText);
         
         // Add ratio label
@@ -160,12 +148,12 @@ class AuditGraph {
         percentageLabelText.setAttribute('y', 30);
         percentageLabelText.setAttribute('text-anchor', 'middle');
         percentageLabelText.setAttribute('font-size', '14px');
-        percentageLabelText.textContent = 'Up:Down Ratio';
+        percentageLabelText.textContent = 'Audit Ratio';
         g.appendChild(percentageLabelText);
         
-        // Add legend
+        // Add legend positioned at bottom-left corner, pushed further down
         const legendG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        legendG.setAttribute('transform', `translate(${this.width - 180},${this.height - 100})`);
+        legendG.setAttribute('transform', `translate(${30},${this.height - 40})`); // Pushed much further down
         
         pieData.forEach((item, i) => {
             const legendRow = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -180,7 +168,7 @@ class AuditGraph {
             const legendText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             legendText.setAttribute('x', 30);
             legendText.setAttribute('y', 15);
-            legendText.textContent = item.label;
+            legendText.textContent = `${item.label}: ${item.value.toFixed(2)} MB`;
             legendRow.appendChild(legendText);
             
             legendG.appendChild(legendRow);
