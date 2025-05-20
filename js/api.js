@@ -12,6 +12,8 @@ class API {
                 throw new Error('Authentication required');
             }
             
+            console.log("Executing GraphQL query:", queryStr);
+            
             const response = await fetch(this.graphqlEndpoint, {
                 method: 'POST',
                 headers: {
@@ -30,7 +32,10 @@ class API {
             
             const data = await response.json();
             
+            console.log("GraphQL response:", JSON.stringify(data));
+            
             if (data.errors) {
+                console.error("GraphQL errors:", JSON.stringify(data.errors));
                 throw new Error(data.errors[0].message);
             }
             
@@ -136,6 +141,35 @@ class API {
         }`;
         
         return this.query(query);
+    }
+    
+    // Get user skills data with amounts
+    async getUserSkills() {
+        console.log("Fetching user skills data");
+        try {
+            const query = `
+            {
+              user {
+                transactions_aggregate(
+                  distinct_on: type
+                  where: { type: { _nin: ["xp", "level", "up", "down"] } }
+                  order_by: [{ type: asc }, { amount: desc }]
+                ) {
+                  nodes {
+                    type
+                    amount
+                  }
+                }
+              }
+            }`;
+            
+            const result = await this.query(query);
+            console.log("Skills query result:", JSON.stringify(result));
+            return result;
+        } catch (error) {
+            console.error("Error in getUserSkills:", error);
+            throw error;
+        }
     }
     
     // Get audit ratio data
