@@ -5,7 +5,7 @@ class XPGraph {
         this.container = document.getElementById(containerId);
         this.width = 800;
         this.height = 400;
-        this.margin = { top: 40, right: 40, bottom: 60, left: 70 };
+        this.margin = { top: 40, right: 60, bottom: 70, left: 80 }; // Increased margins for better label spacing
         this.data = [];
     }
     
@@ -31,6 +31,22 @@ class XPGraph {
             console.error('Error loading XP data:', error);
             throw error;
         }
+    }
+    
+    // Helper to format XP values with appropriate units
+    formatXPValue(xp) {
+        if (xp >= 1000000) {
+            return `${(xp / 1000000).toFixed(2)} MB`;
+        } else if (xp >= 1000) {
+            return `${(xp / 1000).toFixed(1)} kB`;
+        } else {
+            return `${xp} B`;
+        }
+    }
+    
+    // Return raw value in kB for numerical calculations
+    getXPValueInKB(xp) {
+        return xp / 1000;
     }
     
     render() {
@@ -62,7 +78,13 @@ class XPGraph {
             this.processedData[this.processedData.length - 1].date
         ];
         
-        const yDomain = [0, this.processedData[this.processedData.length - 1].cumulativeXP];
+        // Get max value for Y domain in kB - find the actual max value
+        const maxXP = Math.max(...this.processedData.map(d => d.cumulativeXP));
+        const maxXPInKB = maxXP / 1000;
+        // Round up to a nice number for the y-axis scale
+        const yMaxValue = Math.ceil(maxXPInKB / 500) * 500; // Round to nearest 500 kB
+        
+        const yDomain = [0, yMaxValue]; // Dynamic scale based on actual data
         
         // X scale (time)
         const xScale = value => {
@@ -71,7 +93,7 @@ class XPGraph {
             return percent * width;
         };
         
-        // Y scale (XP)
+        // Y scale (XP in kB)
         const yScale = value => {
             const percent = value / yDomain[1];
             return height - (percent * height);
@@ -95,22 +117,19 @@ class XPGraph {
         // X axis label
         const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         xLabel.setAttribute('x', width / 2);
-        xLabel.setAttribute('y', 40);
+        xLabel.setAttribute('y', 50); // Increased from 40 to provide more space
         xLabel.setAttribute('text-anchor', 'middle');
+        xLabel.setAttribute('font-weight', 'bold');
         xLabel.textContent = 'Time';
         xAxis.appendChild(xLabel);
         
-        // X axis ticks (month intervals)
-        const monthInterval = Math.ceil(this.processedData.length / 6); // Approx 6 ticks
-        const uniqueDates = [];
-        this.processedData.forEach((d, i) => {
-            if (i % monthInterval === 0) {
-                uniqueDates.push(d.date);
-            }
-        });
+        // X axis ticks - distribute evenly
+        const numTimePoints = 6; // Number of time points to show
+        const timeDelta = (xDomain[1].getTime() - xDomain[0].getTime()) / (numTimePoints - 1);
         
-        uniqueDates.forEach(date => {
-            const x = xScale(date);
+        for (let i = 0; i < numTimePoints; i++) {
+            const tickDate = new Date(xDomain[0].getTime() + (timeDelta * i));
+            const x = xScale(tickDate);
             
             // Tick line
             const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -124,11 +143,13 @@ class XPGraph {
             // Tick label
             const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             label.setAttribute('x', x);
-            label.setAttribute('y', 20);
+            label.setAttribute('y', 25);
             label.setAttribute('text-anchor', 'middle');
-            label.textContent = date.toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+            label.setAttribute('font-size', '12px');
+            // Format date for better readability
+            label.textContent = tickDate.toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
             xAxis.appendChild(label);
-        });
+        }
         
         g.appendChild(xAxis);
         
@@ -150,16 +171,22 @@ class XPGraph {
         const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         yLabel.setAttribute('transform', 'rotate(-90)');
         yLabel.setAttribute('x', -height / 2);
-        yLabel.setAttribute('y', -40);
+        yLabel.setAttribute('y', -60); // Increased from -50 to reduce overlap
         yLabel.setAttribute('text-anchor', 'middle');
-        yLabel.textContent = 'Cumulative XP';
+        yLabel.setAttribute('font-weight', 'bold');
+        yLabel.textContent = 'Cumulative XP (kB)';
         yAxis.appendChild(yLabel);
         
-        // Y axis ticks (5 equal intervals)
-        const numTicks = 5;
-        for (let i = 0; i <= numTicks; i++) {
-            const yValue = (yDomain[1] / numTicks) * i;
-            const y = yScale(yValue);
+        // Y axis ticks with improved spacing
+        // Reduce number of ticks to prevent overlapping
+        const numTicks = 5; 
+        
+        // Create a reasonable tick interval based on the max value
+        const tickInterval = Math.ceil(yDomain[1] / numTicks / 100) * 100;
+        
+        // Generate ticks at regular intervals
+        for (let tickValue = 0; tickValue <= yDomain[1]; tickValue += tickInterval) {
+            const y = yScale(tickValue);
             
             // Tick line
             const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -170,12 +197,14 @@ class XPGraph {
             tick.setAttribute('stroke', '#333');
             yAxis.appendChild(tick);
             
-            // Tick label
+            // Tick label with kB unit - simplified to avoid overlap
             const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             label.setAttribute('x', -10);
-            label.setAttribute('y', y + 5);
+            label.setAttribute('y', y + 4);
             label.setAttribute('text-anchor', 'end');
-            label.textContent = Math.round(yValue).toLocaleString();
+            label.setAttribute('font-size', '12px');
+            // Just show the number, the unit is already in the axis label
+            label.textContent = `${tickValue}`;
             yAxis.appendChild(label);
             
             // Grid line
@@ -196,8 +225,10 @@ class XPGraph {
         let pathD = '';
         
         this.processedData.forEach((d, i) => {
+            // Convert cumulative XP to kB for graph
+            const kbValue = this.getXPValueInKB(d.cumulativeXP);
             const x = xScale(d.date);
-            const y = yScale(d.cumulativeXP);
+            const y = yScale(Math.min(kbValue, yDomain[1]));
             
             if (i === 0) {
                 pathD += `M ${x},${y}`;
@@ -222,78 +253,97 @@ class XPGraph {
         title.textContent = 'XP Progress Over Time';
         svg.appendChild(title);
         
-        // Add interactive tooltip for data points
-        const tooltip = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        tooltip.setAttribute('visibility', 'hidden');
+        // Add the SVG to the container
+        this.container.appendChild(svg);
         
-        const tooltipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        tooltipRect.setAttribute('rx', 5);
-        tooltipRect.setAttribute('ry', 5);
-        tooltipRect.setAttribute('width', 150);
-        tooltipRect.setAttribute('height', 70);
-        tooltipRect.setAttribute('fill', 'white');
-        tooltipRect.setAttribute('stroke', '#333');
-        tooltip.appendChild(tooltipRect);
+        // Create tooltip div (outside SVG for better positioning)
+        const tooltipDiv = document.createElement('div');
+        tooltipDiv.className = 'xp-graph-tooltip';
+        tooltipDiv.style.position = 'absolute';
+        tooltipDiv.style.display = 'none';
+        tooltipDiv.style.background = 'white';
+        tooltipDiv.style.border = '1px solid #333';
+        tooltipDiv.style.borderRadius = '5px';
+        tooltipDiv.style.padding = '10px';
+        tooltipDiv.style.pointerEvents = 'none';
+        tooltipDiv.style.zIndex = '100';
+        this.container.appendChild(tooltipDiv);
         
-        const tooltipDate = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        tooltipDate.setAttribute('x', 10);
-        tooltipDate.setAttribute('y', 20);
-        tooltipDate.setAttribute('font-size', '12px');
-        tooltip.appendChild(tooltipDate);
+        // Add hover effect for the entire graph using a transparent overlay
+        const hoverArea = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        hoverArea.setAttribute('width', width);
+        hoverArea.setAttribute('height', height);
+        hoverArea.setAttribute('fill', 'transparent');
+        hoverArea.setAttribute('pointer-events', 'all');
+        g.appendChild(hoverArea);
         
-        const tooltipXP = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        tooltipXP.setAttribute('x', 10);
-        tooltipXP.setAttribute('y', 40);
-        tooltipXP.setAttribute('font-size', '12px');
-        tooltip.appendChild(tooltipXP);
-        
-        const tooltipPath = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        tooltipPath.setAttribute('x', 10);
-        tooltipPath.setAttribute('y', 60);
-        tooltipPath.setAttribute('font-size', '12px');
-        tooltip.appendChild(tooltipPath);
-        
-        svg.appendChild(tooltip);
-        
-        // Add data points with hover effect
-        this.processedData.forEach((d, i) => {
-            if (i % 5 === 0 || i === this.processedData.length - 1) { // Add points at intervals
-                const x = xScale(d.date) + this.margin.left;
-                const y = yScale(d.cumulativeXP) + this.margin.top;
+        // Add mouse move handler for the hover area to show tooltip at nearest point
+        hoverArea.addEventListener('mousemove', (event) => {
+            // Get mouse position
+            const svgRect = svg.getBoundingClientRect();
+            const mouseX = event.clientX - svgRect.left - this.margin.left;
+            
+            // Find closest data point
+            let closestPoint = null;
+            let closestDistance = Number.MAX_VALUE;
+            
+            this.processedData.forEach(d => {
+                const x = xScale(d.date);
+                const distance = Math.abs(x - mouseX);
                 
-                const dataPoint = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                dataPoint.setAttribute('cx', xScale(d.date));
-                dataPoint.setAttribute('cy', yScale(d.cumulativeXP));
-                dataPoint.setAttribute('r', 5);
-                dataPoint.setAttribute('fill', '#4285F4');
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestPoint = d;
+                }
+            });
+            
+            if (closestPoint && closestDistance < 50) { // Only show if within reasonable distance
+                const kbValue = this.getXPValueInKB(closestPoint.cumulativeXP);
+                const x = xScale(closestPoint.date);
+                const y = yScale(Math.min(kbValue, yDomain[1]));
                 
-                // Hover events for tooltip
-                dataPoint.addEventListener('mouseover', () => {
-                    dataPoint.setAttribute('r', 7);
-                    dataPoint.setAttribute('fill', '#FF5722');
-                    
-                    // Update tooltip content
-                    tooltipDate.textContent = `Date: ${d.date.toLocaleDateString()}`;
-                    tooltipXP.textContent = `XP: ${d.amount.toLocaleString()}`;
-                    tooltipPath.textContent = `Path: ${d.path.split('/').pop()}`;
-                    
-                    // Position tooltip
-                    tooltip.setAttribute('transform', `translate(${x + 10},${y - 80})`);
-                    tooltip.setAttribute('visibility', 'visible');
-                });
+                // Update tooltip content
+                tooltipDiv.innerHTML = `
+                    <div>Date: ${closestPoint.date.toLocaleDateString()}</div>
+                    <div>Cumulative XP: ${this.formatXPValue(closestPoint.cumulativeXP)}</div>
+                    <div>Transaction: ${this.formatXPValue(closestPoint.amount)}</div>
+                `;
                 
-                dataPoint.addEventListener('mouseout', () => {
-                    dataPoint.setAttribute('r', 5);
-                    dataPoint.setAttribute('fill', '#4285F4');
-                    tooltip.setAttribute('visibility', 'hidden');
-                });
+                // Position tooltip
+                const containerRect = this.container.getBoundingClientRect();
+                const tooltipX = event.clientX - containerRect.left + 10;
+                const tooltipY = event.clientY - containerRect.top - 40;
                 
-                g.appendChild(dataPoint);
+                tooltipDiv.style.left = `${tooltipX}px`;
+                tooltipDiv.style.top = `${tooltipY}px`;
+                tooltipDiv.style.display = 'block';
+                
+                // Show a temporary indicator dot at the closest point
+                const indicator = document.getElementById('xp-hover-indicator');
+                if (indicator) {
+                    indicator.setAttribute('cx', x);
+                    indicator.setAttribute('cy', y);
+                    indicator.setAttribute('visibility', 'visible');
+                } else {
+                    const newIndicator = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    newIndicator.setAttribute('id', 'xp-hover-indicator');
+                    newIndicator.setAttribute('cx', x);
+                    newIndicator.setAttribute('cy', y);
+                    newIndicator.setAttribute('r', 5);
+                    newIndicator.setAttribute('fill', '#FF5722');
+                    g.appendChild(newIndicator);
+                }
             }
         });
         
-        // Add the SVG to the container
-        this.container.appendChild(svg);
+        // Hide tooltip when mouse leaves the graph
+        hoverArea.addEventListener('mouseleave', () => {
+            tooltipDiv.style.display = 'none';
+            const indicator = document.getElementById('xp-hover-indicator');
+            if (indicator) {
+                indicator.setAttribute('visibility', 'hidden');
+            }
+        });
     }
     
     async init() {
