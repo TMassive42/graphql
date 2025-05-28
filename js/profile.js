@@ -23,7 +23,7 @@ class ProfileManager {
                 this.loadXPData(),
                 this.loadProgressData(),
                 this.loadResultsData(),
-                this.loadSkillsData() // Add loading skills data
+                this.loadSkillsData()
             ]);
             
             return {
@@ -103,31 +103,18 @@ class ProfileManager {
         }
     }
     
-    // NEW: Load skills data from GraphQL endpoint
+    // Load skills data using the getUserSkills API function
     async loadSkillsData() {
         try {
-            // Query for predefined skills from the platform
-            const query = `
-            {
-              skill {
-                id
-                name
-                type
-                createdAt
-                user {
-                  id
-                  login
-                }
-                transactions {
-                  id
-                  amount
-                  createdAt
-                }
-              }
-            }`;
+            const data = await api.getUserSkills();
             
-            const data = await api.query(query);
-            this.skillsData = data.skill;
+            // Extract skills from the nested structure
+            if (data.user && data.user[0] && data.user[0].transactions_aggregate && 
+                data.user[0].transactions_aggregate.nodes) {
+                this.skillsData = data.user[0].transactions_aggregate.nodes;
+            } else {
+                this.skillsData = [];
+            }
             
             if (this.progressInfoElement) {
                 this.renderSkillsInfo();
@@ -137,10 +124,7 @@ class ProfileManager {
         } catch (error) {
             console.error('Error loading skills data:', error);
             
-            // If skills query fails, fall back to calculated skills
-            if (this.resultsData && this.progressInfoElement) {
-                this.renderCalculatedSkills();
-            } else if (this.progressInfoElement) {
+            if (this.progressInfoElement) {
                 this.progressInfoElement.innerHTML = '<div class="error">Error loading skills data</div>';
             }
             
@@ -195,74 +179,54 @@ class ProfileManager {
         `;
     }
     
-    // Render skills info using predefined platform skills
+    // Render skills info using the API data
     renderSkillsInfo() {
         if (!this.skillsData || this.skillsData.length === 0) {
-            // Fall back to calculated skills if no predefined skills
-            this.renderCalculatedSkills();
+            this.progressInfoElement.innerHTML = `
+                <div class="info-row"><span>No skills data available</span></div>
+            `;
             return;
         }
         
-        // Calculate total skill amount
-        let totalSkillAmount = 0;
-        const skillAmounts = {};
-        
-        this.skillsData.forEach(skill => {
-            let skillAmount = 0;
-            
-            // Sum up all transaction amounts for this skill
-            if (skill.transactions && skill.transactions.length > 0) {
-                skill.transactions.forEach(transaction => {
-                    skillAmount += transaction.amount || 0;
-                });
+        // Process and format skill names
+        const processedSkills = this.skillsData.map(skill => {
+            // Extract the actual skill name from the type
+            // e.g., "skill_algo" -> "algo", "skill_git" -> "git"
+            let skillName = skill.type;
+            if (skillName.startsWith('skill_')) {
+                skillName = skillName.substring(6); // Remove "skill_" prefix
             }
             
-            skillAmounts[skill.id] = skillAmount;
-            totalSkillAmount += skillAmount;
+            // Capitalize first letter
+            skillName = skillName.charAt(0).toUpperCase() + skillName.slice(1);
+            
+            return {
+                name: skillName,
+                amount: skill.amount,
+                originalType: skill.type
+            };
         });
         
-        // Convert to array with percentages and sort by amount (highest first)
-        const skillsArray = this.skillsData.map(skill => ({
-            id: skill.id,
-            name: skill.name,
-            amount: skillAmounts[skill.id] || 0,
-            percentage: totalSkillAmount > 0 ? 
-                ((skillAmounts[skill.id] || 0) / totalSkillAmount * 100) : 0
-        }));
-        
-        skillsArray.sort((a, b) => b.amount - a.amount);
-        
-        // Get top 5 skills
-        const topSkills = skillsArray.slice(0, 5);
+        // Sort by amount (highest first) and get top 5
+        processedSkills.sort((a, b) => b.amount - a.amount);
+        const topSkills = processedSkills.slice(0, 5);
         
         // Generate HTML for skills
         let skillsHTML = '';
         topSkills.forEach(skill => {
-            // Format the skill amount with appropriate units
-            const formattedAmount = this.formatXPWithUnits(skill.amount);
-            
             skillsHTML += `
                 <div class="info-row">
                     <span>${skill.name}:</span> 
-                    <strong>${skill.percentage.toFixed(1)}% (${formattedAmount})</strong>
+                    <strong>${skill.amount}</strong>
                 </div>
             `;
         });
         
-        // If no skills found
-        if (topSkills.length === 0) {
-            skillsHTML = `
-                <div class="info-row"><span>No skills data available</span></div>
-            `;
-        }
-        
         this.progressInfoElement.innerHTML = `
-            <div class="info-row"><span>Top Skills by Percentage:</span></div>
+            <div class="info-row"><span>Top Skills by Amount:</span></div>
             ${skillsHTML}
         `;
     }
-    
-
     
     // Helper to format XP values with appropriate units
     formatXPWithUnits(xp) {
@@ -273,25 +237,6 @@ class ProfileManager {
         } else {
             return `${xp} B`;
         }
-    }
-    
-
-    
-    // Calculate XP by project category
-    getXPByCategory() {
-        if (!this.xpData) return {};
-        
-        const categoryXP = {};
-        
-        this.xpData.forEach(transaction => {
-            const pathParts = transaction.path.split('/');
-            if (pathParts.length >= 2) {
-                const category = pathParts[1]; // Get second part of path as category
-                categoryXP[category] = (categoryXP[category] || 0) + transaction.amount;
-            }
-        });
-        
-        return categoryXP;
     }
     
     // Get pass/fail ratio for projects
