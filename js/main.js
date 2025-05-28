@@ -1,5 +1,4 @@
 import auth from './auth.js';
-import api from './api.js';
 import profileManager from './profile.js';
 import XPGraph from './graphs/xpGraph.js';
 import AuditGraph from './graphs/auditGraph.js';
@@ -9,8 +8,6 @@ class App {
         // DOM Elements
         this.loginSection = document.getElementById('login-section');
         this.profileSection = document.getElementById('profile-section');
-        this.loginForm = document.getElementById('login-form');
-        this.loginError = document.getElementById('login-error');
         this.logoutBtn = document.getElementById('logout-btn');
         
         // Graph elements
@@ -23,6 +20,15 @@ class App {
         this.xpGraphInstance = null;
         this.auditGraphInstance = null;
         
+        // Set up authentication callbacks
+        auth.setCallbacks(
+            this.onLoginSuccess.bind(this),
+            this.onLogout.bind(this)
+        );
+        
+        // Initialize auth form handlers
+        auth.initializeLoginForm();
+        
         // Initialize event listeners
         this.initEventListeners();
         
@@ -32,14 +38,9 @@ class App {
     
     // Initialize event listeners
     initEventListeners() {
-        // Login form submission
-        if (this.loginForm) {
-            this.loginForm.addEventListener('submit', this.handleLogin.bind(this));
-        }
-        
         // Logout button
         if (this.logoutBtn) {
-            this.logoutBtn.addEventListener('click', this.handleLogout.bind(this));
+            this.logoutBtn.addEventListener('click', () => auth.logout());
         }
         
         // Graph tabs
@@ -58,6 +59,17 @@ class App {
         }
     }
     
+    // Callback for successful login
+    onLoginSuccess() {
+        this.showProfilePage();
+    }
+    
+    // Callback for logout
+    onLogout() {
+        this.clearProfileData();
+        this.showLoginPage();
+    }
+    
     // Show profile page and load data
     showProfilePage() {
         this.loginSection.classList.add('hidden');
@@ -69,53 +81,6 @@ class App {
     showLoginPage() {
         this.loginSection.classList.remove('hidden');
         this.profileSection.classList.add('hidden');
-    }
-    
-    // Handle login form submission
-    async handleLogin(event) {
-        event.preventDefault();
-        this.loginError.textContent = '';
-        
-        const identifier = document.getElementById('identifier').value;
-        const password = document.getElementById('password').value;
-        
-        if (!identifier || !password) {
-            this.loginError.textContent = 'Please enter both identifier and password';
-            return;
-        }
-        
-        try {
-            // Show loading state
-            const submitBtn = this.loginForm.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Logging in...';
-            submitBtn.disabled = true;
-            
-            // Attempt login
-            await auth.login(identifier, password);
-            
-            // Reset form and show profile
-            this.loginForm.reset();
-            this.showProfilePage();
-        } catch (error) {
-            this.loginError.textContent = 'Invalid credentials. Please try again.';
-            console.error('Login error:', error);
-        } finally {
-            // Reset button state
-            const submitBtn = this.loginForm.querySelector('button[type="submit"]');
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-        }
-    }
-    
-    // Handle logout
-    handleLogout() {
-        // Clear all data
-        this.clearProfileData();
-        
-        // Logout and show login page
-        auth.logout();
-        this.showLoginPage();
     }
     
     // Load profile data
@@ -143,7 +108,6 @@ class App {
             if (error.message.includes('Authentication') || error.message.includes('token')) {
                 alert('Your session has expired. Please login again.');
                 auth.logout();
-                this.showLoginPage();
             }
         }
     }

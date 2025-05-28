@@ -38,7 +38,42 @@
     border-color: #4285F4;
 }
 
-#login-form button {
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    padding-right: 60px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #5f6368;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 5px 10px;
+    transition: color 0.3s;
+}
+
+.password-toggle:hover {
+    color: #4285F4;
+}
+
+.password-toggle:focus {
+    outline: none;
+}
+
+#login-form button[type="submit"] {
     width: 100%;
     margin-top: 10px;
+}
+
+#login-form button[type="submit"]:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
 }

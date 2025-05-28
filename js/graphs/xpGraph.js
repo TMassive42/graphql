@@ -1,12 +1,23 @@
 import api from '../api.js';
 
 class XPGraph {
-    constructor(containerId) {
+     constructor(containerId) {
         this.container = document.getElementById(containerId);
-        this.width = 800;
-        this.height = 400;
         this.margin = { top: 40, right: 60, bottom: 70, left: 80 }; // Increased margins for better label spacing
         this.data = [];
+        this.updateDimensions();
+    }
+    
+    updateDimensions() {
+        // Get container width and calculate responsive dimensions
+        const containerWidth = this.container.offsetWidth || 800;
+        this.width = Math.min(containerWidth, 800);
+        this.height = Math.min(this.width * 0.5, 400); // Maintain aspect ratio
+        
+        // Adjust margins for smaller screens
+        if (this.width < 600) {
+            this.margin = { top: 30, right: 40, bottom: 60, left: 60 };
+        }
     }
     
     async loadData() {

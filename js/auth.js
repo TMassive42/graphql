@@ -4,9 +4,73 @@ class Auth {
         this.baseAuthUrl = 'https://learn.zone01kisumu.ke/api/auth/signin';
         this.userId = null;
         
+        // DOM elements
+        this.loginForm = null;
+        this.loginError = null;
+        this.passwordInput = null;
+        this.passwordToggle = null;
+        
         // Check if token exists and parse user ID
         if (this.JWT) {
             this.parseUserId();
+        }
+    }
+    
+    // Initialize DOM elements and event listeners
+    initializeLoginForm() {
+        this.loginForm = document.getElementById('login-form');
+        this.loginError = document.getElementById('login-error');
+        this.passwordInput = document.getElementById('password');
+        this.passwordToggle = document.getElementById('password-toggle');
+        
+        if (this.loginForm) {
+            this.loginForm.addEventListener('submit', this.handleLogin.bind(this));
+        }
+        
+        if (this.passwordToggle) {
+            this.passwordToggle.addEventListener('click', this.togglePasswordVisibility.bind(this));
+        }
+    }
+    
+    // Handle login form submission
+    async handleLogin(event) {
+        event.preventDefault();
+        this.clearError();
+        
+        const identifier = document.getElementById('identifier').value;
+        const password = document.getElementById('password').value;
+        
+        if (!identifier || !password) {
+            this.showError('Please enter both identifier and password');
+            return;
+        }
+        
+        const submitBtn = this.loginForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        
+        try {
+            // Show loading state
+            submitBtn.textContent = 'Logging in...';
+            submitBtn.disabled = true;
+            
+            // Attempt login
+            const success = await this.login(identifier, password);
+            
+            if (success) {
+                // Reset form on successful login
+                this.loginForm.reset();
+                // Trigger login success callback
+                if (this.onLoginSuccess) {
+                    this.onLoginSuccess();
+                }
+            }
+        } catch (error) {
+            this.showError('Invalid credentials. Please try again.');
+            console.error('Login error:', error);
+            
+            // Reset button state on error
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
         }
     }
     
@@ -60,6 +124,55 @@ class Auth {
         }
     }
     
+    // Toggle password visibility
+    togglePasswordVisibility() {
+        if (this.passwordInput.type === 'password') {
+            this.passwordInput.type = 'text';
+            this.passwordToggle.textContent = 'Hide';
+        } else {
+            this.passwordInput.type = 'password';
+            this.passwordToggle.textContent = 'Show';
+        }
+    }
+    
+    // Reset login form to initial state
+    resetLoginForm() {
+        // Clear any error messages
+        this.clearError();
+        
+        // Reset form fields
+        if (this.loginForm) {
+            this.loginForm.reset();
+        }
+        
+        // Reset password visibility
+        if (this.passwordInput && this.passwordToggle) {
+            this.passwordInput.type = 'password';
+            this.passwordToggle.textContent = 'Show';
+        }
+        
+        // Reset submit button state
+        const submitBtn = this.loginForm?.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.textContent = 'Login';
+            submitBtn.disabled = false;
+        }
+    }
+    
+    // Show error message
+    showError(message) {
+        if (this.loginError) {
+            this.loginError.textContent = message;
+        }
+    }
+    
+    // Clear error message
+    clearError() {
+        if (this.loginError) {
+            this.loginError.textContent = '';
+        }
+    }
+    
     // Get the authentication header for API requests
     getAuthHeader() {
         return {
@@ -77,6 +190,20 @@ class Auth {
         this.JWT = null;
         this.userId = null;
         localStorage.removeItem('jwt');
+        
+        // Reset login form when logging out
+        this.resetLoginForm();
+        
+        // Trigger logout callback
+        if (this.onLogout) {
+            this.onLogout();
+        }
+    }
+    
+    // Set callback functions
+    setCallbacks(onLoginSuccess, onLogout) {
+        this.onLoginSuccess = onLoginSuccess;
+        this.onLogout = onLogout;
     }
 }
 

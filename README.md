@@ -90,13 +90,20 @@ You can customize your profile by:
 
 ## Deployment
 
-### GitHub Pages Deployment
+### Vercel Deployment
 
 1. Create a GitHub repository for your project
 2. Push your code to the repository
-3. Go to repository Settings → Pages
-4. Select your main branch as the source
-5. Your site will be published at `https://[username].github.io/[repository-name]/`
+3. Create a Vercel account and sign up using GitHub.
+4. After logging in, click "New Project".
+5. Select the Git repository where your site lives.
+6. Hit Deploy — Vercel will build and deploy your site.
+7. After a short wait, you’ll get a live link like:
+```bash
+https://your-project-name.vercel.app
+```
+
+For this project, the deployment link is: https://graphql-6i1g.vercel.app/
 
 
 ### Debug Tools

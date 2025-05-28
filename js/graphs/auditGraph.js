@@ -3,10 +3,22 @@ import api from '../api.js';
 class AuditGraph {
     constructor(containerId) {
         this.container = document.getElementById(containerId);
-        this.width = 500;
-        this.height = 500;
         this.margin = 60; // Increased margin for better spacing
         this.data = null;
+        this.updateDimensions();
+    }
+    
+    updateDimensions() {
+        // Get container width and calculate responsive dimensions
+        const containerWidth = this.container.offsetWidth || 500;
+        const size = Math.min(containerWidth, 500);
+        this.width = size;
+        this.height = size;
+        
+        // Adjust margin for smaller screens
+        if (this.width < 400) {
+            this.margin = 40;
+        }
     }
     
     async loadData() {
