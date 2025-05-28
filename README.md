@@ -16,14 +16,12 @@ This project creates a personalized profile page that displays your student info
 - Basic knowledge of HTML, CSS, and JavaScript
 - A text editor or IDE
 - A web server for local testing (optional)
-- A GitHub account (for deployment)
 
 ### Project Structure
 
 ```
 graphql-profile/
 ├── index.html            # Main HTML page
-├── favicon.ico           # Site favicon
 ├── styles/               # CSS stylesheets
 │   ├── main.css          # General styles
 │   ├── login.css         # Login page styles
@@ -36,8 +34,7 @@ graphql-profile/
 │   └── graphs/           # SVG graph generators
 │       ├── xpGraph.js    # XP over time visualization
 │       └── auditGraph.js # Audit ratio visualization
-└── assets/               # Static assets
-    └── logo.png          # Logo image
+└── README.md             # Project documentation
 ```
 
 ## Development Guide
@@ -60,6 +57,7 @@ The API module contains several pre-built queries to fetch different types of da
 - `getProjectsXP()` - XP grouped by project
 - `getUserProgress()` - Progress on exercises and projects
 - `getUserResults()` - Detailed results with pass/fail status
+- `getUserSkills()`  - User skill data with amounts
 - `getAuditRatio()` - Audit statistics (given vs. received)
 
 These queries demonstrate different GraphQL concepts:
@@ -80,7 +78,6 @@ The project includes two interactive SVG graphs:
 2. **Audit Ratio Pie Chart**
    - Visualizes the ratio of audits given vs. received
    - Interactive segments that respond to user interaction
-   - Displays percentage breakdown in the center
 
 ### Customization
 
@@ -101,21 +98,6 @@ You can customize your profile by:
 4. Select your main branch as the source
 5. Your site will be published at `https://[username].github.io/[repository-name]/`
 
-### Netlify Deployment
-
-1. Create a Netlify account
-2. Connect your GitHub repository
-3. Configure build settings (not needed for this project)
-4. Deploy the site
-5. Optionally, configure a custom domain
-
-## Troubleshooting
-
-### Common Issues
-
-- **Login Fails**: Make sure you're using the correct credentials and the API endpoint is accessible
-- **No Data Displayed**: Check the browser console for GraphQL errors
-- **Graphs Not Rendering**: Ensure your SVG code is valid and the data format matches what the graphs expect
 
 ### Debug Tools
 
