@@ -67,13 +67,13 @@ class API {
     async getUserXP() {
         const query = `
         {
-            transaction(where: {type: {_eq: "xp"}}, order_by: {createdAt: asc}) {
-                id
-                type
-                amount
-                createdAt
-                path
-                objectId
+            transaction(where: {type: {_eq: "xp"}, _and: [{ eventId: { _eq: 75 } }] }, order_by: { createdAt: asc}) {
+            amount
+            createdAt
+            eventId
+            path
+            type
+            userId
             }
         }`;
         
