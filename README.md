@@ -55,8 +55,6 @@ The API module contains several pre-built queries to fetch different types of da
 - `getUserInfo()` - Basic user information (name, login, email)
 - `getUserXP()` - XP transaction history
 - `getProjectsXP()` - XP grouped by project
-- `getUserProgress()` - Progress on exercises and projects
-- `getUserResults()` - Detailed results with pass/fail status
 - `getUserSkills()`  - User skill data with amounts
 - `getAuditRatio()` - Audit statistics (given vs. received)
 
@@ -103,7 +101,7 @@ You can customize your profile by:
 https://your-project-name.vercel.app
 ```
 
-For this project, the deployment link is: https://graphql-6i1g.vercel.app/
+For this project, the deployment link is:  https://graphql-iota-seven.vercel.app 
 
 
 ### Debug Tools

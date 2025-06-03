@@ -49,15 +49,12 @@ class Auth {
         const originalText = submitBtn.textContent;
         
         try {
-            // Show loading state
             submitBtn.textContent = 'Logging in...';
             submitBtn.disabled = true;
             
-            // Attempt login
             const success = await this.login(identifier, password);
             
             if (success) {
-                // Reset form on successful login
                 this.loginForm.reset();
                 // Trigger login success callback
                 if (this.onLoginSuccess) {
@@ -74,7 +71,6 @@ class Auth {
         }
     }
     
-    // Login using either username:password or email:password
     async login(identifier, password) {
         try {
             // Create base64 encoded credentials
@@ -94,7 +90,6 @@ class Auth {
             const data = await response.json();
             this.JWT = data;
             
-            // Store JWT in localStorage
             localStorage.setItem('jwt', this.JWT);
             
             // Parse user ID from JWT
@@ -135,9 +130,7 @@ class Auth {
         }
     }
     
-    // Reset login form to initial state
     resetLoginForm() {
-        // Clear any error messages
         this.clearError();
         
         // Reset form fields
@@ -159,14 +152,12 @@ class Auth {
         }
     }
     
-    // Show error message
     showError(message) {
         if (this.loginError) {
             this.loginError.textContent = message;
         }
     }
     
-    // Clear error message
     clearError() {
         if (this.loginError) {
             this.loginError.textContent = '';
@@ -180,18 +171,15 @@ class Auth {
         };
     }
     
-    // Check if user is logged in
     isLoggedIn() {
         return !!this.JWT;
     }
     
-    // Logout user by removing JWT
     logout() {
         this.JWT = null;
         this.userId = null;
         localStorage.removeItem('jwt');
         
-        // Reset login form when logging out
         this.resetLoginForm();
         
         // Trigger logout callback

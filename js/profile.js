@@ -10,8 +10,6 @@ class ProfileManager {
         // Data storage
         this.userData = null;
         this.xpData = null;
-        this.progressData = null;
-        this.resultsData = null;
         this.skillsData = null;
     }
     
@@ -21,16 +19,12 @@ class ProfileManager {
             await Promise.all([
                 this.loadUserInfo(),
                 this.loadXPData(),
-                this.loadProgressData(),
-                this.loadResultsData(),
                 this.loadSkillsData()
             ]);
             
             return {
                 userData: this.userData,
                 xpData: this.xpData,
-                progressData: this.progressData,
-                resultsData: this.resultsData,
                 skillsData: this.skillsData
             };
         } catch (error) {
@@ -79,30 +73,6 @@ class ProfileManager {
         }
     }
     
-    // Load progress data
-    async loadProgressData() {
-        try {
-            const data = await api.getUserProgress();
-            this.progressData = data.progress;
-            return this.progressData;
-        } catch (error) {
-            console.error('Error loading progress data:', error);
-            throw error;
-        }
-    }
-    
-    // Load results data (with nested object info)
-    async loadResultsData() {
-        try {
-            const data = await api.getUserResults();
-            this.resultsData = data.result;
-            return this.resultsData;
-        } catch (error) {
-            console.error('Error loading results data:', error);
-            throw error;
-        }
-    }
-    
     // Load skills data using the getUserSkills API function
     async loadSkillsData() {
         try {
@@ -140,7 +110,6 @@ class ProfileManager {
             <div class="info-row"><span>Login:</span> <strong>${this.userData.login || 'N/A'}</strong></div>
             <div class="info-row"><span>Name:</span> <strong>${this.userData.firstName || ''} ${this.userData.lastName || ''}</strong></div>
             <div class="info-row"><span>Email:</span> <strong>${this.userData.email || 'N/A'}</strong></div>
-            <div class="info-row"><span>ID:</span> <strong>${this.userData.id}</strong></div>
         `;
     }
     
@@ -190,11 +159,9 @@ class ProfileManager {
         
         // Process and format skill names
         const processedSkills = this.skillsData.map(skill => {
-            // Extract the actual skill name from the type
-            // e.g., "skill_algo" -> "algo", "skill_git" -> "git"
             let skillName = skill.type;
             if (skillName.startsWith('skill_')) {
-                skillName = skillName.substring(6); // Remove "skill_" prefix
+                skillName = skillName.substring(6);
             }
             
             // Capitalize first letter
@@ -228,31 +195,6 @@ class ProfileManager {
         `;
     }
     
-    // Helper to format XP values with appropriate units
-    formatXPWithUnits(xp) {
-        if (xp >= 1000000) {
-            return `${(xp / 1000000).toFixed(2)} MB`;
-        } else if (xp >= 1000) {
-            return `${(xp / 1000).toFixed(1)} kB`;
-        } else {
-            return `${xp} B`;
-        }
-    }
-    
-    // Get pass/fail ratio for projects
-    getProjectRatio() {
-        if (!this.resultsData) return { pass: 0, fail: 0 };
-        
-        // Filter for just project results (not exercises)
-        const projectResults = this.resultsData.filter(r => 
-            r.object && r.object.type === 'project'
-        );
-        
-        const pass = projectResults.filter(r => r.grade > 0).length;
-        const fail = projectResults.filter(r => r.grade === 0).length;
-        
-        return { pass, fail, total: pass + fail };
-    }
 }
 
 // Create a singleton instance

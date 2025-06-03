@@ -101,47 +101,6 @@ class API {
         return this.query(query);
     }
     
-    // Get user progress data
-    async getUserProgress() {
-        const query = `
-        {
-            progress {
-                id
-                userId
-                objectId
-                grade
-                createdAt
-                updatedAt
-                path
-            }
-        }`;
-        
-        return this.query(query);
-    }
-    
-    // Get user results with object information
-    async getUserResults() {
-        const query = `
-        {
-            result {
-                id
-                objectId
-                userId
-                grade
-                type
-                createdAt
-                updatedAt
-                path
-                object {
-                    id
-                    name
-                    type
-                }
-            }
-        }`;
-        
-        return this.query(query);
-    }
     
     // Get user skills data with amounts
     async getUserSkills() {
@@ -187,20 +146,6 @@ class API {
         return this.query(query);
     }
     
-    // Get information for a specific object by ID
-    async getObjectInfo(objectId) {
-        const query = `
-        {
-            object(where: {id: {_eq: ${objectId}}}) {
-                id
-                name
-                type
-                attrs
-            }
-        }`;
-        
-        return this.query(query);
-    }
 }
 
 // Create a singleton instance

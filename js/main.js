@@ -26,24 +26,18 @@ class App {
             this.onLogout.bind(this)
         );
         
-        // Initialize auth form handlers
         auth.initializeLoginForm();
-        
-        // Initialize event listeners
         this.initEventListeners();
-        
-        // Check authentication on load
         this.checkAuth();
     }
     
     // Initialize event listeners
     initEventListeners() {
-        // Logout button
+
         if (this.logoutBtn) {
             this.logoutBtn.addEventListener('click', () => auth.logout());
         }
         
-        // Graph tabs
         if (this.xpTab && this.auditTab) {
             this.xpTab.addEventListener('click', this.switchToXPGraph.bind(this));
             this.auditTab.addEventListener('click', this.switchToAuditGraph.bind(this));
@@ -59,25 +53,21 @@ class App {
         }
     }
     
-    // Callback for successful login
     onLoginSuccess() {
         this.showProfilePage();
     }
     
-    // Callback for logout
     onLogout() {
         this.clearProfileData();
         this.showLoginPage();
     }
     
-    // Show profile page and load data
     showProfilePage() {
         this.loginSection.classList.add('hidden');
         this.profileSection.classList.remove('hidden');
         this.loadProfileData();
     }
-    
-    // Show login page
+
     showLoginPage() {
         this.loginSection.classList.remove('hidden');
         this.profileSection.classList.add('hidden');
@@ -91,7 +81,6 @@ class App {
                 el.innerHTML = '<div class="loading">Loading...</div>';
             });
             
-            // Load all profile data
             await profileManager.loadAllData();
             
             // Initialize graphs once data is loaded
@@ -99,12 +88,10 @@ class App {
         } catch (error) {
             console.error('Error loading profile data:', error);
             
-            // Show error message
             document.querySelectorAll('.card-content').forEach(el => {
                 el.innerHTML = '<div class="error">Error loading data. Please try again later.</div>';
             });
             
-            // If error is authentication-related, return to login
             if (error.message.includes('Authentication') || error.message.includes('token')) {
                 alert('Your session has expired. Please login again.');
                 auth.logout();
@@ -112,7 +99,6 @@ class App {
         }
     }
     
-    // Clear profile data when logging out
     clearProfileData() {
         // Clear DOM elements
         if (this.xpGraph) this.xpGraph.innerHTML = '';
@@ -123,7 +109,6 @@ class App {
         this.auditGraphInstance = null;
     }
     
-    // Initialize SVG graphs
     initializeGraphs() {
         // Initialize XP graph if container exists
         if (this.xpGraph) {
@@ -156,7 +141,6 @@ class App {
     
     // Window resize handler for responsive graphs
     handleResize() {
-        // Redraw graphs when window is resized
         if (this.xpGraphInstance && this.xpGraph.classList.contains('active-graph')) {
             this.xpGraphInstance.render();
         }
@@ -170,10 +154,8 @@ class App {
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     const app = new App();
-    
-    // Add window resize handler for responsive graphs
+
     window.addEventListener('resize', app.handleResize.bind(app));
 });
 
-// Export app class for potential use in other modules
 export default App;

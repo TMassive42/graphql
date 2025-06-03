@@ -3,7 +3,7 @@ import api from '../api.js';
 class XPGraph {
      constructor(containerId) {
         this.container = document.getElementById(containerId);
-        this.margin = { top: 40, right: 60, bottom: 70, left: 80 }; // Increased margins for better label spacing
+        this.margin = { top: 40, right: 60, bottom: 70, left: 80 };
         this.data = [];
         this.updateDimensions();
     }
@@ -12,9 +12,8 @@ class XPGraph {
         // Get container width and calculate responsive dimensions
         const containerWidth = this.container.offsetWidth || 800;
         this.width = Math.min(containerWidth, 800);
-        this.height = Math.min(this.width * 0.5, 400); // Maintain aspect ratio
+        this.height = Math.min(this.width * 0.5, 400);
         
-        // Adjust margins for smaller screens
         if (this.width < 600) {
             this.margin = { top: 30, right: 40, bottom: 60, left: 60 };
         }
@@ -44,7 +43,6 @@ class XPGraph {
         }
     }
     
-    // Helper to format XP values with appropriate units
     formatXPValue(xp) {
         if (xp >= 1000000) {
             return `${(xp / 1000000).toFixed(2)} MB`;
@@ -55,7 +53,6 @@ class XPGraph {
         }
     }
     
-    // Return raw value in kB for numerical calculations
     getXPValueInKB(xp) {
         return xp / 1000;
     }
@@ -92,19 +89,17 @@ class XPGraph {
         // Get max value for Y domain in kB - find the actual max value
         const maxXP = Math.max(...this.processedData.map(d => d.cumulativeXP));
         const maxXPInKB = maxXP / 1000;
-        // Round up to a nice number for the y-axis scale
-        const yMaxValue = Math.ceil(maxXPInKB / 500) * 500; // Round to nearest 500 kB
+    
+        const yMaxValue = Math.ceil(maxXPInKB / 500) * 500;
         
         const yDomain = [0, yMaxValue]; // Dynamic scale based on actual data
         
-        // X scale (time)
         const xScale = value => {
             const domainRange = xDomain[1].getTime() - xDomain[0].getTime();
             const percent = (value.getTime() - xDomain[0].getTime()) / domainRange;
             return percent * width;
         };
         
-        // Y scale (XP in kB)
         const yScale = value => {
             const percent = value / yDomain[1];
             return height - (percent * height);
@@ -128,14 +123,14 @@ class XPGraph {
         // X axis label
         const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         xLabel.setAttribute('x', width / 2);
-        xLabel.setAttribute('y', 50); // Increased from 40 to provide more space
+        xLabel.setAttribute('y', 50);
         xLabel.setAttribute('text-anchor', 'middle');
         xLabel.setAttribute('font-weight', 'bold');
         xLabel.textContent = 'Time';
         xAxis.appendChild(xLabel);
         
-        // X axis ticks - distribute evenly
-        const numTimePoints = 6; // Number of time points to show
+        // X axis ticks
+        const numTimePoints = 6;
         const timeDelta = (xDomain[1].getTime() - xDomain[0].getTime()) / (numTimePoints - 1);
         
         for (let i = 0; i < numTimePoints; i++) {
@@ -182,14 +177,12 @@ class XPGraph {
         const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         yLabel.setAttribute('transform', 'rotate(-90)');
         yLabel.setAttribute('x', -height / 2);
-        yLabel.setAttribute('y', -60); // Increased from -50 to reduce overlap
+        yLabel.setAttribute('y', -60);
         yLabel.setAttribute('text-anchor', 'middle');
         yLabel.setAttribute('font-weight', 'bold');
         yLabel.textContent = 'Cumulative XP (kB)';
         yAxis.appendChild(yLabel);
         
-        // Y axis ticks with improved spacing
-        // Reduce number of ticks to prevent overlapping
         const numTicks = 5; 
         
         // Create a reasonable tick interval based on the max value
@@ -208,13 +201,12 @@ class XPGraph {
             tick.setAttribute('stroke', '#333');
             yAxis.appendChild(tick);
             
-            // Tick label with kB unit - simplified to avoid overlap
+            // Tick label with kB unit
             const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             label.setAttribute('x', -10);
             label.setAttribute('y', y + 4);
             label.setAttribute('text-anchor', 'end');
             label.setAttribute('font-size', '12px');
-            // Just show the number, the unit is already in the axis label
             label.textContent = `${tickValue}`;
             yAxis.appendChild(label);
             
@@ -236,7 +228,6 @@ class XPGraph {
         let pathD = '';
         
         this.processedData.forEach((d, i) => {
-            // Convert cumulative XP to kB for graph
             const kbValue = this.getXPValueInKB(d.cumulativeXP);
             const x = xScale(d.date);
             const y = yScale(Math.min(kbValue, yDomain[1]));
@@ -264,7 +255,6 @@ class XPGraph {
         title.textContent = 'XP Progress Over Time';
         svg.appendChild(title);
         
-        // Add the SVG to the container
         this.container.appendChild(svg);
         
         // Create tooltip div (outside SVG for better positioning)
@@ -308,7 +298,7 @@ class XPGraph {
                 }
             });
             
-            if (closestPoint && closestDistance < 50) { // Only show if within reasonable distance
+            if (closestPoint && closestDistance < 50) {
                 const kbValue = this.getXPValueInKB(closestPoint.cumulativeXP);
                 const x = xScale(closestPoint.date);
                 const y = yScale(Math.min(kbValue, yDomain[1]));
